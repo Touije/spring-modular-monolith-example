@@ -222,4 +222,15 @@ Voici un résumé des principaux points de terminaison disponibles pour interagi
 ### Module Commande
 
 -   **Lister toutes les commandes**
-    -   `GET /commandes` 
+    -   `GET /commandes`
+
+-   **Changer le statut d'une commande**
+    -   `PUT /commandes/{commandeId}/statut`
+    -   Remplace `{commandeId}` par l'ID de la commande à modifier.
+    -   **Body** :
+        ```json
+        {
+          "nouveauStatut": "CONFIRMEE"
+        }
+        ```
+    -   Les statuts possibles sont : `EN_COURS`, `CONFIRMEE`, `ANNULEE`. 

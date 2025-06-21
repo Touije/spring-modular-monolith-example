@@ -57,6 +57,7 @@ public class AcheteurService {
         acheteur.setNom(request.nom());
         acheteur.setEmail(request.email());
         acheteur.setAdresse(request.adresse());
+        acheteur.setTelephone(request.telephone());
         return acheteurRepository.save(acheteur);
     }
 

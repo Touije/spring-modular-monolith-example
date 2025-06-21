@@ -19,4 +19,6 @@ public class Acheteur {
     private String email;
 
     private String adresse;
+
+    private String telephone;
 }
