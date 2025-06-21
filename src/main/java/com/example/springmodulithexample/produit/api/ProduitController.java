@@ -2,7 +2,7 @@ package com.example.springmodulithexample.produit.api;
 
 import com.example.springmodulithexample.produit.dto.CreationProduitRequest;
 import com.example.springmodulithexample.produit.dto.ProduitDto;
-import com.example.springmodulithexample.produit.service.ProduitMapper;
+import com.example.springmodulithexample.produit.mapper.ProduitMapper;
 import com.example.springmodulithexample.produit.service.ProduitService;
 import org.springframework.web.bind.annotation.*;
 

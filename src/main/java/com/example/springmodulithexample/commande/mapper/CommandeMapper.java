@@ -2,17 +2,10 @@ package com.example.springmodulithexample.commande.mapper;
 
 import com.example.springmodulithexample.commande.domain.Commande;
 import com.example.springmodulithexample.commande.dto.CommandeDto;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
 
-@Component
-public class CommandeMapper {
+@Mapper(componentModel = "spring")
+public interface CommandeMapper {
 
-    public CommandeDto toDto(Commande commande) {
-        return new CommandeDto(
-            commande.getId(),
-            commande.getAcheteurId(),
-            commande.getProduitId(),
-            commande.getDateCommande()
-        );
-    }
+    CommandeDto toDto(Commande commande);
 } 

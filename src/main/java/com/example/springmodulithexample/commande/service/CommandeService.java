@@ -27,7 +27,7 @@ public class CommandeService {
     public void onAchatEffectue(AchatEffectueEvent event) {
         // Here, we could use the APIs of other modules to get product/buyer details
         // before creating the order, to make it more robust.
-        Commande commande = new Commande(event.acheteurId(), event.produitId());
+        Commande commande = new Commande(event.getAcheteurId(), event.getProduitId(), event.getQuantite());
         commandeRepository.save(commande);
     }
 

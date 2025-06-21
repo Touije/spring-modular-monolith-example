@@ -167,4 +167,59 @@ Cette approche, connue sous le nom de **Strangler Fig Pattern**, permet une migr
     mvn spring-boot:run
     ```
 4.  Une fois l'application démarrée, vous pouvez accéder à la documentation de l'API Swagger UI :
-    [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html) 
+    [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
+
+---
+
+## 🕹️ Endpoints de l'API
+
+Voici un résumé des principaux points de terminaison disponibles pour interagir avec l'application.
+
+### Module Acheteur
+
+-   **Créer un acheteur**
+    -   `POST /acheteurs`
+    -   **Body** :
+        ```json
+        {
+          "nom": "Ahmed Berrada",
+          "email": "ahmed.berrada@email.ma",
+          "adresse": "22 Rue de Fès, Rabat"
+        }
+        ```
+
+-   **Lister tous les acheteurs**
+    -   `GET /acheteurs`
+
+-   **Effectuer un achat**
+    -   `POST /acheteurs/achat`
+    -   **Body** :
+        ```json
+        {
+          "acheteurId": 1,
+          "produitId": 2,
+          "quantite": 1
+        }
+        ```
+
+### Module Produit
+
+-   **Créer un produit**
+    -   `POST /produits`
+    -   **Body** :
+        ```json
+        {
+          "nom": "Théière en Inox",
+          "prix": 220.00,
+          "description": "Théière marocaine traditionnelle, capacité 1L.",
+          "quantiteEnStock": 150
+        }
+        ```
+
+-   **Lister tous les produits**
+    -   `GET /produits`
+
+### Module Commande
+
+-   **Lister toutes les commandes**
+    -   `GET /commandes` 

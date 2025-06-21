@@ -17,4 +17,8 @@ public class Produit {
     private String nom;
 
     private double prix;
+
+    private String description;
+
+    private int quantiteEnStock;
 } 

@@ -3,7 +3,7 @@ package com.example.springmodulithexample.acheteur.api;
 import com.example.springmodulithexample.acheteur.dto.AchatRequest;
 import com.example.springmodulithexample.acheteur.dto.AcheteurDto;
 import com.example.springmodulithexample.acheteur.dto.CreationAcheteurRequest;
-import com.example.springmodulithexample.acheteur.service.AcheteurMapper;
+import com.example.springmodulithexample.acheteur.mapper.AcheteurMapper;
 import com.example.springmodulithexample.acheteur.service.AcheteurService;
 import org.springframework.web.bind.annotation.*;
 

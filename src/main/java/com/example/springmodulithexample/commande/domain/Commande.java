@@ -22,11 +22,14 @@ public class Commande {
 
     private Long produitId;
 
+    private int quantite;
+
     private LocalDateTime dateCommande;
 
-    public Commande(Long acheteurId, Long produitId) {
+    public Commande(Long acheteurId, Long produitId, int quantite) {
         this.acheteurId = acheteurId;
         this.produitId = produitId;
+        this.quantite = quantite;
         this.dateCommande = LocalDateTime.now();
     }
 } 
