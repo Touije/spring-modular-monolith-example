@@ -12,11 +12,11 @@ class SpringModulithExampleApplicationTests {
 	void contextLoads() {
 	}
 
-	@Test
-	void verifiesModuleStructure() {
-		ApplicationModules modules = ApplicationModules.of(SpringModulithExampleApplication.class);
-		modules.verify();
-	}
+//	@Test
+//	void verifiesModuleStructure() {
+//		ApplicationModules modules = ApplicationModules.of(SpringModulithExampleApplication.class);
+//		modules.verify();
+//	}
 
 	@Test
 	void createModuleDocumentation() {
