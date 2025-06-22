@@ -97,9 +97,52 @@ Le module `common` contient un `GlobalExceptionHandler` annoté avec `@RestContr
 
 ---
 
-## 🚀 Stratégie de Transition vers les Microservices
+## 🚀 Plan de Transition Complet vers les Microservices
 
-L'approche du monolithe modulaire facilite grandement une migration future vers les microservices en suivant le **Strangler Fig Pattern**. Les modules étant déjà bien délimités et faiblement couplés, ils sont des candidats naturels à l'extraction.
+L'architecture de ce projet a été conçue comme une rampe de lancement. Voici un plan stratégique détaillé pour faire évoluer ce monolithe modulaire vers une architecture de microservices complète, en utilisant le **Strangler Fig Pattern**.
+
+L'ordre d'extraction est crucial et dicté par les dépendances. L'ordre logique est : **1. Produit**, **2. Acheteur**, **3. Commande**.
+
+### Phase 1 : Extraction du Microservice `produit-service`
+
+*   **Pourquoi en premier ?** Le module `Produit` est le plus indépendant. Il n'a aucune dépendance sortante vers d'autres modules métier.
+
+*   **Étapes :**
+    1.  **Infrastructure** : Créer un nouveau projet Spring Boot (`produit-service`), une base de données PostgreSQL dédiée, et un broker de messages (ex: RabbitMQ).
+    2.  **Migration du Code & Données** : Copier le code du module `produit` dans le nouveau service. Migrer les données de la table `produit` vers la nouvelle base de données.
+    3.  **Remplacer les Dépendances Internes** : Le `AcheteurServiceImpl` (encore dans le monolithe) appelle `ProduitService`. Cet appel direct doit être remplacé par un appel réseau. La meilleure approche est **asynchrone** :
+        *   `AcheteurService` publie un événement `StockADeduireEvent` sur le broker.
+        *   Le `produit-service` s'abonne à cet événement et décrémente son stock. Cela garantit le découplage et la résilience.
+    4.  **API Gateway** : Mettre en place une API Gateway (ex: Spring Cloud Gateway) pour rediriger toutes les requêtes ` /produits/** ` vers le nouveau `produit-service`.
+    5.  **Nettoyage** : Une fois le service stable, supprimer le module `produit` du monolithe.
+
+### Phase 2 : Extraction du Microservice `acheteur-service`
+
+*   **Pourquoi en second ?** Le module `Acheteur` dépend du `Produit` (qui est maintenant un service externe).
+
+*   **Étapes :**
+    1.  **Infrastructure** : Créer un nouveau projet `acheteur-service` avec sa propre base de données.
+    2.  **Migration du Code & Données** : Déplacer le code et migrer les données de la table `acheteur`.
+    3.  **Externaliser la Publication d'Événements** :
+        *   Le `AcheteurServiceImpl` publie un `AchatEffectueEvent`. Cet événement, qui était en mémoire, doit maintenant être publié sur le broker de messages externe. Le module `Commande` (encore dans le monolithe) devra adapter son écouteur pour le consommer depuis le broker. Spring Modulith facilite cette transition avec des modules comme `spring-modulith-starter-amqp`.
+    4.  **API Gateway** : Mettre à jour la Gateway pour rediriger les requêtes ` /acheteurs/** ` vers l'`acheteur-service`.
+    5.  **Nettoyage** : Supprimer le module `acheteur` du monolithe. À ce stade, le monolithe ne contient plus que la logique de `Commande` et `Common`.
+
+### Phase 3 : Extraction du Microservice `commande-service`
+
+*   **Pourquoi en dernier ?** Le module `Commande` est le plus dépendant. Il réagit à des événements et agrège des données provenant des autres domaines.
+
+*   **Étapes :**
+    1.  **Infrastructure & Migration** : Mêmes étapes que pour les autres services (projet, DB, migration).
+    2.  **Gérer l'Agrégation de Données (le plus grand défi)** :
+        *   **Problème** : L'endpoint `GET /commandes` renvoie des détails sur l'acheteur et le produit. Dans un monolithe, c'est une simple jointure SQL. Dans les microservices, les données sont dans des bases de données séparées.
+        *   **Solution - Composition d'API** : Le `commande-service`, en recevant une requête pour les détails d'une commande, appelle :
+            1.  L'`acheteur-service` via `GET /acheteurs/{id}` pour obtenir les détails de l'acheteur.
+            2.  Le `produit-service` via `GET /produits/{id}` pour obtenir les détails du produit.
+            3.  Il **compose** ensuite la réponse finale.
+        *   **Inconvénients** : Latence accrue (appels réseau en série) et couplage en cascade. Une alternative plus avancée serait de maintenir une réplique locale des données nécessaires (CQRS).
+    3.  **API Gateway** : Rediriger ` /commandes/** ` vers le nouveau `commande-service`.
+    4.  **Nettoyage Final** : Le monolithe originel est maintenant vide. Il peut être archivé. L'architecture est entièrement distribuée.
 
 ---
 
