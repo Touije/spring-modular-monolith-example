@@ -1,14 +1,9 @@
 package com.example.springmodulithexample.commande.api;
 
-import com.example.springmodulithexample.commande.dto.ChangementStatutRequest;
-import com.example.springmodulithexample.commande.dto.CommandeDetailsDto;
-import com.example.springmodulithexample.commande.service.CommandeService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.example.springmodulithexample.commande.dto.ChangementStatutRequestDTO;
+import com.example.springmodulithexample.commande.dto.CommandeDetailsResponseDTO;
+import com.example.springmodulithexample.commande.service.CommandeServiceInterface;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -16,19 +11,19 @@ import java.util.List;
 @RequestMapping("/commandes")
 public class CommandeController {
 
-    private final CommandeService commandeService;
+    private final CommandeServiceInterface commandeService;
 
-    public CommandeController(CommandeService commandeService) {
+    public CommandeController(CommandeServiceInterface commandeService) {
         this.commandeService = commandeService;
     }
 
     @GetMapping
-    public List<CommandeDetailsDto> getCommandes() {
-        return commandeService.getCommandesDetails();
+    public List<CommandeDetailsResponseDTO> getAllCommandes() {
+        return commandeService.getAllCommandesWithDetails();
     }
 
     @PutMapping("/{commandeId}/statut")
-    public CommandeDetailsDto changerStatutCommande(@PathVariable Long commandeId, @RequestBody ChangementStatutRequest request) {
-        return commandeService.changerStatutCommande(commandeId, request.nouveauStatut());
+    public void changerStatutCommande(@PathVariable Long commandeId, @RequestBody ChangementStatutRequestDTO request) {
+        commandeService.changerStatut(commandeId, request.getNouveauStatut());
     }
 } 

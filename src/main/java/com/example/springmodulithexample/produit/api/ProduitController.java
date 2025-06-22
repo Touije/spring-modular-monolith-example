@@ -1,34 +1,35 @@
 package com.example.springmodulithexample.produit.api;
 
-import com.example.springmodulithexample.produit.dto.CreationProduitRequest;
-import com.example.springmodulithexample.produit.dto.ProduitDto;
+import com.example.springmodulithexample.produit.dto.CreationProduitRequestDTO;
+import com.example.springmodulithexample.produit.dto.ProduitResponseDTO;
 import com.example.springmodulithexample.produit.mapper.ProduitMapper;
-import com.example.springmodulithexample.produit.service.ProduitService;
+import com.example.springmodulithexample.produit.service.ProduitServiceInterface;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/produits")
 public class ProduitController {
 
-    private final ProduitService produitService;
+    private final ProduitServiceInterface produitService;
     private final ProduitMapper produitMapper;
 
-    public ProduitController(ProduitService produitService, ProduitMapper produitMapper) {
+    public ProduitController(ProduitServiceInterface produitService, ProduitMapper produitMapper) {
         this.produitService = produitService;
         this.produitMapper = produitMapper;
     }
 
     @PostMapping
-    public ProduitDto createProduit(@RequestBody CreationProduitRequest request) {
+    public ProduitResponseDTO createProduit(@RequestBody CreationProduitRequestDTO request) {
         return produitMapper.toDto(produitService.createProduit(request));
     }
 
     @GetMapping
-    public List<ProduitDto> getProduits() {
+    public List<ProduitResponseDTO> getProduits() {
         return produitService.getProduits().stream()
                 .map(produitMapper::toDto)
-                .toList();
+                .collect(Collectors.toList());
     }
-} 
+}
