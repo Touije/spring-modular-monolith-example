@@ -56,14 +56,23 @@ public class CommandeServiceImpl implements CommandeServiceInterface {
     @Transactional(readOnly = true)
     public List<CommandeDetailsResponseDTO> getAllCommandesWithDetails() {
         return StreamSupport.stream(commandeRepository.findAll().spliterator(), false)
-                .map(commande -> {
-                    Acheteur acheteur = acheteurRepository.findById(commande.getAcheteurId())
-                            .orElseThrow(() -> new NoSuchElementException("Acheteur non trouvé pour la commande " + commande.getId()));
-                    Produit produit = produitRepository.findById(commande.getProduitId())
-                            .orElseThrow(() -> new NoSuchElementException("Produit non trouvé pour la commande " + commande.getId()));
-                    return commandeMapper.toDetailsDto(commande, acheteur, produit);
-                })
+                .map(this::mapToDetailsDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public CommandeDetailsResponseDTO getCommandeById(Long id) {
+        Commande commande = commandeRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Commande non trouvée avec l'id: " + id));
+        return mapToDetailsDto(commande);
+    }
+
+    @Override
+    public void deleteCommande(Long id) {
+        if (!commandeRepository.existsById(id)) {
+            throw new NoSuchElementException("Commande non trouvée avec l'id: " + id);
+        }
+        commandeRepository.deleteById(id);
     }
 
     @Override
@@ -73,4 +82,12 @@ public class CommandeServiceImpl implements CommandeServiceInterface {
         commande.setStatut(nouveauStatut);
         commandeRepository.save(commande);
     }
-} 
+
+    private CommandeDetailsResponseDTO mapToDetailsDto(Commande commande) {
+        Acheteur acheteur = acheteurRepository.findById(commande.getAcheteurId())
+                .orElseThrow(() -> new NoSuchElementException("Acheteur non trouvé pour la commande " + commande.getId()));
+        Produit produit = produitRepository.findById(commande.getProduitId())
+                .orElseThrow(() -> new NoSuchElementException("Produit non trouvé pour la commande " + commande.getId()));
+        return commandeMapper.toDetailsDto(commande, acheteur, produit);
+    }
+}

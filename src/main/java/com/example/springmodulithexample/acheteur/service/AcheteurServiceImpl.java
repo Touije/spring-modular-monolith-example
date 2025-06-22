@@ -2,6 +2,7 @@ package com.example.springmodulithexample.acheteur.service;
 
 import com.example.springmodulithexample.acheteur.domain.Acheteur;
 import com.example.springmodulithexample.acheteur.dto.AchatRequestDTO;
+import com.example.springmodulithexample.acheteur.dto.AcheteurUpdateRequestDTO;
 import com.example.springmodulithexample.acheteur.dto.CreationAcheteurRequestDTO;
 import com.example.springmodulithexample.acheteur.events.AchatEffectueEvent;
 import com.example.springmodulithexample.acheteur.repository.AcheteurRepository;
@@ -47,6 +48,30 @@ public class AcheteurServiceImpl implements AcheteurServiceInterface {
     public List<Acheteur> getAcheteurs() {
         return StreamSupport.stream(acheteurRepository.findAll().spliterator(), false)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Acheteur getAcheteurById(Long id) {
+        return acheteurRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Acheteur non trouvé avec l'id: " + id));
+    }
+
+    @Override
+    public Acheteur updateAcheteur(Long id, AcheteurUpdateRequestDTO request) {
+        Acheteur acheteur = getAcheteurById(id);
+        acheteur.setNom(request.getNom());
+        acheteur.setEmail(request.getEmail());
+        acheteur.setAdresse(request.getAdresse());
+        acheteur.setTelephone(request.getTelephone());
+        return acheteurRepository.save(acheteur);
+    }
+
+    @Override
+    public void deleteAcheteur(Long id) {
+        if (!acheteurRepository.existsById(id)) {
+            throw new NoSuchElementException("Acheteur non trouvé avec l'id: " + id);
+        }
+        acheteurRepository.deleteById(id);
     }
 
     @Override

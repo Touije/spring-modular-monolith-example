@@ -2,11 +2,13 @@ package com.example.springmodulithexample.produit.service;
 
 import com.example.springmodulithexample.produit.domain.Produit;
 import com.example.springmodulithexample.produit.dto.CreationProduitRequestDTO;
+import com.example.springmodulithexample.produit.dto.ProduitUpdateRequestDTO;
 import com.example.springmodulithexample.produit.repository.ProduitRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -36,6 +38,30 @@ public class ProduitServiceImpl implements ProduitServiceInterface {
     public List<Produit> getProduits() {
         return StreamSupport.stream(produitRepository.findAll().spliterator(), false)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Produit getProduitById(Long id) {
+        return produitRepository.findById(id)
+                .orElseThrow(() -> new NoSuchElementException("Produit non trouvé avec l'id: " + id));
+    }
+
+    @Override
+    public Produit updateProduit(Long id, ProduitUpdateRequestDTO request) {
+        Produit produit = getProduitById(id);
+        produit.setNom(request.getNom());
+        produit.setDescription(request.getDescription());
+        produit.setPrix(request.getPrix());
+        produit.setQuantiteEnStock(request.getQuantiteEnStock());
+        return produitRepository.save(produit);
+    }
+
+    @Override
+    public void deleteProduit(Long id) {
+        if (!produitRepository.existsById(id)) {
+            throw new NoSuchElementException("Produit non trouvé avec l'id: " + id);
+        }
+        produitRepository.deleteById(id);
     }
 
     @Override
