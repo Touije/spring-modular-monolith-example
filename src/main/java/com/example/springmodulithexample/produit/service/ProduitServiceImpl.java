@@ -4,6 +4,10 @@ import com.example.springmodulithexample.produit.domain.Produit;
 import com.example.springmodulithexample.produit.dto.CreationProduitRequestDTO;
 import com.example.springmodulithexample.produit.dto.ProduitUpdateRequestDTO;
 import com.example.springmodulithexample.produit.repository.ProduitRepository;
+import com.example.springmodulithexample.acheteur.events.AchatEffectueEvent;
+import com.example.springmodulithexample.produit.events.StockDecrementeEvent;
+import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,9 +22,11 @@ import java.util.stream.StreamSupport;
 public class ProduitServiceImpl implements ProduitServiceInterface {
 
     private final ProduitRepository produitRepository;
+    private final KafkaTemplate<String, StockDecrementeEvent> stockDecrementeKafkaTemplate;
 
-    public ProduitServiceImpl(ProduitRepository produitRepository) {
+    public ProduitServiceImpl(ProduitRepository produitRepository, KafkaTemplate<String, StockDecrementeEvent> stockDecrementeKafkaTemplate) {
         this.produitRepository = produitRepository;
+        this.stockDecrementeKafkaTemplate = stockDecrementeKafkaTemplate;
     }
 
     @Override
@@ -87,5 +93,31 @@ public class ProduitServiceImpl implements ProduitServiceInterface {
     @Transactional(readOnly = true)
     public boolean existsById(Long id) {
         return produitRepository.existsById(id);
+    }
+
+    @KafkaListener(topics = "achat-effectue", groupId = "modulith-group", containerFactory = "achatEffectueKafkaListenerContainerFactory")
+    public void consommerAchatEffectue(AchatEffectueEvent event) {
+        Produit produit = produitRepository.findById(event.getProduitId())
+                .orElseThrow(() -> new IllegalArgumentException("Produit non trouvé avec l'ID: " + event.getProduitId()));
+
+        if (produit.getQuantiteEnStock() < event.getQuantite()) {
+            // Option : publier un événement d'échec ou loguer l'erreur
+            return;
+        }
+
+        produit.setQuantiteEnStock(produit.getQuantiteEnStock() - event.getQuantite());
+        produitRepository.save(produit);
+
+        // Publier l'événement de stock décrémenté enrichi
+        StockDecrementeEvent stockEvent = new StockDecrementeEvent(
+            event.getAcheteurId(),
+            event.getNomAcheteur(),
+            event.getEmailAcheteur(),
+            produit.getId(),
+            produit.getNom(),
+            produit.getPrix(),
+            event.getQuantite()
+        );
+        stockDecrementeKafkaTemplate.send("stock-decremente", stockEvent);
     }
 } 

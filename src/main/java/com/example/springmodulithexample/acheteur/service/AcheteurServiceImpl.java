@@ -6,9 +6,9 @@ import com.example.springmodulithexample.acheteur.dto.AcheteurUpdateRequestDTO;
 import com.example.springmodulithexample.acheteur.dto.CreationAcheteurRequestDTO;
 import com.example.springmodulithexample.acheteur.events.AchatEffectueEvent;
 import com.example.springmodulithexample.acheteur.repository.AcheteurRepository;
-import com.example.springmodulithexample.produit.service.ProduitServiceInterface;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,13 +23,13 @@ public class AcheteurServiceImpl implements AcheteurServiceInterface {
 
     private final AcheteurRepository acheteurRepository;
     private final ApplicationEventPublisher events;
-    private final ProduitServiceInterface produitService;
+    private final KafkaTemplate<String, AchatEffectueEvent> achatEffectueKafkaTemplate;
 
 
-    public AcheteurServiceImpl(AcheteurRepository acheteurRepository, ApplicationEventPublisher events, ProduitServiceInterface produitService) {
+    public AcheteurServiceImpl(AcheteurRepository acheteurRepository, ApplicationEventPublisher events, KafkaTemplate<String, AchatEffectueEvent> achatEffectueKafkaTemplate) {
         this.acheteurRepository = acheteurRepository;
         this.events = events;
-        this.produitService = produitService;
+        this.achatEffectueKafkaTemplate = achatEffectueKafkaTemplate;
     }
 
 
@@ -83,13 +83,17 @@ public class AcheteurServiceImpl implements AcheteurServiceInterface {
             throw new IllegalArgumentException("La quantité achetée doit être supérieure à zéro.");
         }
 
-        acheteurRepository.findById(achatRequest.getAcheteurId())
+        Acheteur acheteur = acheteurRepository.findById(achatRequest.getAcheteurId())
                 .orElseThrow(() -> new NoSuchElementException("Acheteur non trouvé avec l'id: " + achatRequest.getAcheteurId()));
 
-        produitService.decrementerStock(achatRequest.getProduitId(), achatRequest.getQuantite());
-
-
-        log.info("Validation réussie, publication de l'événement d'achat.");
-        events.publishEvent(new AchatEffectueEvent(achatRequest.getAcheteurId(), achatRequest.getProduitId(), achatRequest.getQuantite()));
+        AchatEffectueEvent event = new AchatEffectueEvent(
+            acheteur.getId(),
+            acheteur.getNom(),
+            acheteur.getEmail(),
+            achatRequest.getProduitId(),
+            achatRequest.getQuantite()
+        );
+        log.info("Validation réussie, publication de l'événement d'achat enrichi sur Kafka.");
+        achatEffectueKafkaTemplate.send("achat-effectue", event);
     }
 } 

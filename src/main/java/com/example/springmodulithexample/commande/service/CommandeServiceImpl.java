@@ -10,7 +10,9 @@ import com.example.springmodulithexample.commande.mapper.CommandeMapper;
 import com.example.springmodulithexample.commande.repository.CommandeRepository;
 import com.example.springmodulithexample.produit.domain.Produit;
 import com.example.springmodulithexample.produit.repository.ProduitRepository;
+import com.example.springmodulithexample.produit.events.StockDecrementeEvent;
 import org.springframework.context.event.EventListener;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,6 +43,11 @@ public class CommandeServiceImpl implements CommandeServiceInterface {
         creerCommande(event.getAcheteurId(), event.getProduitId(), event.getQuantite());
     }
 
+    @KafkaListener(topics = "stock-decremente", groupId = "modulith-group", containerFactory = "stockDecrementeKafkaListenerContainerFactory")
+    public void consommerStockDecremente(StockDecrementeEvent event) {
+        creerCommande(event);
+    }
+
     @Override
     public void creerCommande(Long acheteurId, Long produitId, int quantite) {
         Commande commande = new Commande();
@@ -52,11 +59,25 @@ public class CommandeServiceImpl implements CommandeServiceInterface {
         commandeRepository.save(commande);
     }
 
+    public void creerCommande(StockDecrementeEvent event) {
+        Commande commande = new Commande();
+        commande.setAcheteurId(event.getAcheteurId());
+        commande.setNomAcheteur(event.getNomAcheteur());
+        commande.setEmailAcheteur(event.getEmailAcheteur());
+        commande.setProduitId(event.getProduitId());
+        commande.setNomProduit(event.getNomProduit());
+        commande.setPrixProduit(event.getPrixProduit());
+        commande.setQuantite(event.getQuantite());
+        commande.setStatut(StatutCommande.EN_COURS);
+        commande.setDateCommande(java.time.LocalDateTime.now());
+        commandeRepository.save(commande);
+    }
+
     @Override
     @Transactional(readOnly = true)
     public List<CommandeDetailsResponseDTO> getAllCommandesWithDetails() {
         return StreamSupport.stream(commandeRepository.findAll().spliterator(), false)
-                .map(this::mapToDetailsDto)
+                .map(commandeMapper::toDetailsDto)
                 .collect(Collectors.toList());
     }
 
@@ -64,7 +85,7 @@ public class CommandeServiceImpl implements CommandeServiceInterface {
     public CommandeDetailsResponseDTO getCommandeById(Long id) {
         Commande commande = commandeRepository.findById(id)
                 .orElseThrow(() -> new NoSuchElementException("Commande non trouvée avec l'id: " + id));
-        return mapToDetailsDto(commande);
+        return commandeMapper.toDetailsDto(commande);
     }
 
     @Override
@@ -81,13 +102,5 @@ public class CommandeServiceImpl implements CommandeServiceInterface {
                 .orElseThrow(() -> new NoSuchElementException("Commande non trouvée avec l'id: " + commandeId));
         commande.setStatut(nouveauStatut);
         commandeRepository.save(commande);
-    }
-
-    private CommandeDetailsResponseDTO mapToDetailsDto(Commande commande) {
-        Acheteur acheteur = acheteurRepository.findById(commande.getAcheteurId())
-                .orElseThrow(() -> new NoSuchElementException("Acheteur non trouvé pour la commande " + commande.getId()));
-        Produit produit = produitRepository.findById(commande.getProduitId())
-                .orElseThrow(() -> new NoSuchElementException("Produit non trouvé pour la commande " + commande.getId()));
-        return commandeMapper.toDetailsDto(commande, acheteur, produit);
     }
 }

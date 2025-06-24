@@ -21,9 +21,11 @@ public class Commande {
     private Long id;
 
     private Long acheteurId;
-
+    private String nomAcheteur;
+    private String emailAcheteur;
     private Long produitId;
-
+    private String nomProduit;
+    private double prixProduit;
     private int quantite;
 
     @Enumerated(EnumType.STRING)
